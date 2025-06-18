@@ -4,8 +4,8 @@ import requests
 import json
 import re
 
-GEMINI_API_KEY ="AIzaSyCe770X9SaBrc93clrNiPm8ie266UQaT6M"
-GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+GEMINI_API_KEY ="AIzaSyDVKQGkVKwJpNmwIO3eHlgVp8Eb95nYhcs"
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContentt"
 
 # Run Git diff to get changes in HTML/CSS
 def get_git_diff():
@@ -52,11 +52,11 @@ diff = get_git_diff()
 added, removed = extract_selectors(diff)
 
 if not added and not removed:
+    print("✅ No selector changes found in the last commit.")
+else:
     print("🧠 Detected selector changes:")
     print("➕ Added:", added)
     print("➖ Removed:", removed)
 
     explanation = ask_gemini(added, removed)
     print("\n Gemini Explanation:\n", explanation)
-else:
-    print("✅ No selector changes found in the last commit.")
