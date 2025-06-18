@@ -52,11 +52,11 @@ diff = get_git_diff()
 added, removed = extract_selectors(diff)
 
 if not added and not removed:
-    print("✅ No selector changes found in the last commit.")
-else:
     print("🧠 Detected selector changes:")
     print("➕ Added:", added)
     print("➖ Removed:", removed)
+else:
+    print("✅ No selector changes found in the last commit.")
 
     explanation = ask_gemini(added, removed)
     print("\n Gemini Explanation:\n", explanation)
