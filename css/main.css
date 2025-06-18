@@ -177,17 +177,32 @@ footer a:hover{
     color: var(--pink)!important;
 }
 
-.shop-now-btn {
-  background-color: var(--pink);
-  color: #fff;
-  padding: 12px 30px;
-  border-radius: 25px;
-  border: 2px solid var(--pink);
+.shop-now-button {
+  background-color: #0066ff;           /* Primary Blue */
+  color: #ffffff;                      /* White Text */
+  padding: 12px 28px;
+  border: none;
+  border-radius: 50px;                 /* Pill Shape */
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 8px 20px rgba(0, 102, 255, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
-.shop-now-btn:hover {
-  background-color: #fff;
-  color: var(--pink);
+
+.shop-now-button:hover {
+  background-color: #0047b3;           /* Darker Blue on Hover */
+  transform: translateY(-3px) scale(1.05);
+  box-shadow: 0 12px 24px rgba(0, 102, 255, 0.4);
 }
+
+.shop-now-button:active {
+  transform: translateY(0) scale(0.98);
+  box-shadow: 0 4px 10px rgba(0, 102, 255, 0.2);
+}
+
 
 
 /* media queries */
