@@ -1,0 +1,31 @@
+name: Detect Selector Changes & Update ObservePoint
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  run-python-pipeline:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run selector comparison and ObservePoint updater
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OP_API_KEY: ${{ secrets.OP_API_KEY }}
+        run: |
+          python compare_selectors.py
+          python update_observepoint.py
