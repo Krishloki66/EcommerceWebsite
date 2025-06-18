@@ -203,6 +203,33 @@ footer a:hover{
   box-shadow: 0 4px 10px rgba(0, 102, 255, 0.2);
 }
 
+.buy-now-button {
+  background-color: #ff3b3f;           /* Red Button for Urgency */
+  color: #ffffff;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 6px 15px rgba(255, 59, 63, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.buy-now-button:hover {
+  background-color: #cc2f33;
+  transform: scale(1.05);
+  box-shadow: 0 10px 20px rgba(255, 59, 63, 0.5);
+}
+
+.buy-now-button:active {
+  transform: scale(0.97);
+  box-shadow: 0 3px 8px rgba(255, 59, 63, 0.3);
+}
+
+
 
 
 /* media queries */
