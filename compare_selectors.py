@@ -1,77 +1,62 @@
-import requests
-from bs4 import BeautifulSoup
-import json
+import subprocess
 import os
+import requests
+import json
+import re
 
-# Set your URLs here (old version and new version of the website)
-old_url = "https://your-uhg-site.com/old-version"
-new_url = "https://your-uhg-site.com/"
-
-# Gemini API key (from GitHub Secrets)
 GEMINI_API_KEY = os.getenv("AIzaSyCe770X9SaBrc93clrNiPm8ie266UQaT6M")
-gemini_endpoint = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
+GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
 
-# Extract selectors from given URL
-def get_selectors(url):
-    response = requests.get(url)
-    soup = BeautifulSoup(response.text, 'html.parser')
-    selectors = set()
+# Run Git diff to get changes in HTML/CSS
+def get_git_diff():
+    result = subprocess.run(["git", "diff", "HEAD~1", "HEAD"], capture_output=True, text=True)
+    return result.stdout
 
-    for tag in soup.find_all():
-        if tag.has_attr('class'):
-            for class_name in tag['class']:
-                selectors.add(f".{class_name}")
-        if tag.has_attr('id'):
-            selectors.add(f"#{tag['id']}")
+# Extract class and id selectors from diff
+def extract_selectors(diff_text):
+    added = set()
+    removed = set()
+    for line in diff_text.splitlines():
+        if line.startswith("+") and not line.startswith("+++"):
+            added.update(re.findall(r'class="([^"]+)"', line))
+            added.update(re.findall(r'id="([^"]+)"', line))
+        elif line.startswith("-") and not line.startswith("---"):
+            removed.update(re.findall(r'class="([^"]+)"', line))
+            removed.update(re.findall(r'id="([^"]+)"', line))
+    # Split multiple class names
+    added = set(cls for entry in added for cls in entry.split())
+    removed = set(cls for entry in removed for cls in entry.split())
+    return added, removed
 
-    return selectors
+# Ask Gemini to explain the change
+def ask_gemini(added, removed):
+    prompt = f"""These selectors were changed in a website update:
+Added: {', '.join(f'.{s}' for s in added)}
+Removed: {', '.join(f'.{s}' for s in removed)}
 
-# Compare selectors between two versions
-old_selectors = get_selectors(old_url)
-new_selectors = get_selectors(new_url)
+Explain what these changes might indicate in terms of UI or functionality."""
+    
+    response = requests.post(
+        f"{GEMINI_URL}?key={GEMINI_API_KEY}",
+        headers={"Content-Type": "application/json"},
+        json={"contents": [{"parts": [{"text": prompt}]}]}
+    )
+    
+    try:
+        return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+    except Exception as e:
+        return f"⚠️ Failed to get response: {e}"
 
-added = new_selectors - old_selectors
-removed = old_selectors - new_selectors
+# MAIN EXECUTION
+diff = get_git_diff()
+added, removed = extract_selectors(diff)
 
-selector_changes = []
-
-# If there are any changes, explain them using Gemini
-if added or removed:
-    for sel in added:
-        prompt = f"What does this selector mean and why might it have been added: {sel}"
-        response = requests.post(
-            f"{gemini_endpoint}?key={GEMINI_API_KEY}",
-            headers={"Content-Type": "application/json"},
-            json={"contents": [{"parts": [{"text": prompt}]}]}
-        )
-        explanation = response.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-        selector_changes.append({
-            "change": "added",
-            "selector": sel,
-            "explanation": explanation
-        })
-
-    for sel in removed:
-        prompt = f"Why might this selector have been removed: {sel}"
-        response = requests.post(
-            f"{gemini_endpoint}?key={GEMINI_API_KEY}",
-            headers={"Content-Type": "application/json"},
-            json={"contents": [{"parts": [{"text": prompt}]}]}
-        )
-        explanation = response.json().get("candidates", [{}])[0].get("content", {}).get("parts", [{}])[0].get("text", "")
-        selector_changes.append({
-            "change": "removed",
-            "selector": sel,
-            "explanation": explanation
-        })
-
-    # Save to file
-    with open("changes.json", "w") as f:
-        json.dump(selector_changes, f, indent=2)
-
-    # Print for GitHub Actions
-    print("🟢 Selector changes detected:")
-    print(json.dumps(selector_changes, indent=2))
-
+if not added and not removed:
+    print("✅ No selector changes found in the last commit.")
 else:
-    print("✅ No selector changes detected between the two versions.")
+    print("🧠 Detected selector changes:")
+    print("➕ Added:", added)
+    print("➖ Removed:", removed)
+
+    explanation = ask_gemini(added, removed)
+    print("\n🤖 Gemini Explanation:\n", explanation)

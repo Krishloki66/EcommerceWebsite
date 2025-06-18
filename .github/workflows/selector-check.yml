@@ -1,29 +1,25 @@
-name: Detect Selector Changes Using Gemini
+name: Detect Selector Changes
 
 on:
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
-  detect-selectors:
+  detect:
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout code
+      - name: Checkout repo
         uses: actions/checkout@v3
 
-      - name: Set up Python
+      - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11'
+          python-version: "3.11"
 
       - name: Install dependencies
-        run: |
-          pip install -r requirements.txt
+        run: pip install requests
 
-      - name: Run selector comparison only
+      - name: Run selector diff check
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: |
-          python compare_selectors.py
+        run: python compare_git_selectors.py
