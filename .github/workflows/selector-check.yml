@@ -1,4 +1,4 @@
-name: Detect Selector Changes & Update ObservePoint
+name: Detect Selector Changes Using Gemini
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - main
 
 jobs:
-  run-python-pipeline:
+  detect-selectors:
     runs-on: ubuntu-latest
 
     steps:
@@ -22,10 +22,8 @@ jobs:
         run: |
           pip install -r requirements.txt
 
-      - name: Run selector comparison and ObservePoint updater
+      - name: Run selector comparison only
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          OP_API_KEY: ${{ secrets.OP_API_KEY }}
         run: |
           python compare_selectors.py
-          python update_observepoint.py
