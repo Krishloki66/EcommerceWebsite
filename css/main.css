@@ -177,6 +177,19 @@ footer a:hover{
     color: var(--pink)!important;
 }
 
+.shop-now-btn {
+  background-color: var(--pink);
+  color: #fff;
+  padding: 12px 30px;
+  border-radius: 25px;
+  border: 2px solid var(--pink);
+}
+.shop-now-btn:hover {
+  background-color: #fff;
+  color: var(--pink);
+}
+
+
 /* media queries */
 @media(min-width: 992px){
     .nav-item{
