@@ -2,24 +2,20 @@ name: Detect Selector Changes
 
 on:
   push:
-    branches: [ main, master ]
+    branches: [ master ]
 
 jobs:
   detect:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Setup Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
-        run: pip install requests
-
       - name: Run selector diff check
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-        run: python compare_git_selectors.py
+        run: |
+          python compare_git_selectors.py
