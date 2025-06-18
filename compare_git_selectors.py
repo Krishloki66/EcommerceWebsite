@@ -1,14 +1,21 @@
 import subprocess
 import re
 
+def run_cmd(cmd):
+    try:
+        result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore')
+        return result.stdout.strip() if result.stdout else ""
+    except Exception as e:
+        print(f"⚠️ Command failed: {cmd}\n{e}")
+        return ""
+
 def get_git_diff():
-    # Get the diff between main and master
-    result = subprocess.run(
-        ["git", "diff", "origin/master..origin/main"],
-        capture_output=True,
-        text=True
-    )
-    return result.stdout
+    print("🔄 Fetching all remote branches...")
+    run_cmd(["git", "fetch", "--all"])
+
+    print("🔍 Checking diff between main and master...")
+    diff = run_cmd(["git", "diff", "origin/master..origin/main"])
+    return diff
 
 def extract_selectors(diff_text):
     added = set()
@@ -16,27 +23,21 @@ def extract_selectors(diff_text):
     
     for line in diff_text.splitlines():
         line = line.strip()
-        
-        # Skip unchanged lines
-        if not line or line.startswith("+++ ") or line.startswith("--- "):
-            continue
-        
-        # Detect added lines
         if line.startswith('+') and not line.startswith('+++'):
             added.update(re.findall(r'class="([^"]+)"', line))
             added.update(re.findall(r'id="([^"]+)"', line))
-
-        # Detect removed lines
-        if line.startswith('-') and not line.startswith('---'):
+        elif line.startswith('-') and not line.startswith('---'):
             removed.update(re.findall(r'class="([^"]+)"', line))
             removed.update(re.findall(r'id="([^"]+)"', line))
 
+    added = set(cls for entry in added for cls in entry.split())
+    removed = set(cls for entry in removed for cls in entry.split())
     return added, removed
 
 def main():
     diff = get_git_diff()
-    
-    if not diff:
+
+    if not diff.strip():
         print("❌ No diff found or git error.")
         return
 
