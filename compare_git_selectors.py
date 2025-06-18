@@ -4,7 +4,7 @@ import requests
 import json
 import re
 
-GEMINI_API_KEY = os.getenv("AIzaSyCe770X9SaBrc93clrNiPm8ie266UQaT6M")
+GEMINI_API_KEY ="AIzaSyCe770X9SaBrc93clrNiPm8ie266UQaT6M"
 GEMINI_URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent"
 
 # Run Git diff to get changes in HTML/CSS
@@ -59,4 +59,4 @@ else:
     print("➖ Removed:", removed)
 
     explanation = ask_gemini(added, removed)
-    print("\n🤖 Gemini Explanation:\n", explanation)
+    print("\n Gemini Explanation:\n", explanation)
