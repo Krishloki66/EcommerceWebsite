@@ -9,20 +9,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout all branches
+      - name: Checkout all branches with full history
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
+          fetch-tags: true
 
-      - name: Set up Python
+      - name: Set up Python 3.11
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
-      - name: Install dependencies
+      - name: Install Python dependencies
         run: pip install requests
 
-      - name: Run selector diff + AI update
+      - name: Print current branch and compare with origin/main
+        run: |
+          echo "🔍 Current branch: $(git rev-parse --abbrev-ref HEAD)"
+          git branch -a
+          git log --oneline -n 3
+
+      - name: Run selector diff + AI suggestion
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OP_API_KEY: ${{ secrets.OP_API_KEY }}

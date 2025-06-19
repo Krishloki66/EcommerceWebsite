@@ -15,8 +15,10 @@ def run_cmd(cmd):
         return ""
 
 def get_git_diff():
-    print("🔄 Getting diff from last commit...")
-    return run_cmd(["git", "diff", "HEAD~1", "HEAD"])
+    print("🔄 Fetching full history...")
+    run_cmd(["git", "fetch", "--unshallow"])
+    print("🔍 Comparing current branch with origin/main...")
+    return run_cmd(["git", "diff", "--diff-filter=ACMR", "origin/main...HEAD"])
 
 def extract_selectors(diff_text):
     added = set()
