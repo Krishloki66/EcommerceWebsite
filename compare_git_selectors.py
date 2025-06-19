@@ -44,7 +44,7 @@ def extract_selectors(diff_text):
 def ask_gemini(old_sel, new_sel, gemini_key):
     if not gemini_key:
         return "[Error] GEMINI_API_KEY not set."
-    
+
     prompt = f"""We detected changes in selectors.
 Removed: {', '.join(f'.{s}' for s in old_sel)}
 Added: {', '.join(f'.{s}' for s in new_sel)}
@@ -69,7 +69,7 @@ def update_observepoint_tests(old_selector, new_selector, op_api_key):
         print("❌ OP_API_KEY not set.")
         return
 
-    # 🔧 Replace these with actual ObservePoint test IDs
+    # Replace these with your actual ObservePoint test IDs
     test_ids = [123456, 234567]
 
     for tid in test_ids:
@@ -90,15 +90,15 @@ def update_observepoint_tests(old_selector, new_selector, op_api_key):
             print(f"❌ Failed to update test {tid}: {e}")
 
 def main():
-    # ✅ Load API keys inside main
+    # ✅ Load secrets INSIDE main
     GEMINI_KEY = os.getenv("GEMINI_API_KEY")
     OP_API_KEY = os.getenv("OP_API_KEY")
 
-    # ✅ Print key presence
     print("🔐 GEMINI_KEY set:", bool(GEMINI_KEY))
     print("🔐 OP_API_KEY set:", bool(OP_API_KEY))
 
     diff = get_git_diff()
+    print("\n📄 Raw Git Diff:\n", diff)
 
     if not diff.strip():
         print("❌ No diff found or Git error.")
@@ -110,8 +110,8 @@ def main():
         print("✅ No selector changes found.")
         return
 
-    print("➖ Removed selectors:", added)
-    print("➕ Added selectors:", removed)
+    print("➖ Removed selectors:", removed)
+    print("➕ Added selectors:", added)
 
     suggestion = ask_gemini(removed, added, GEMINI_KEY)
     print("\n🤖 Gemini Suggestion:\n", suggestion)
