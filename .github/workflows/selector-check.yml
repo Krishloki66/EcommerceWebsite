@@ -9,24 +9,30 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ✅ Checkout all branches
+      - name: ✅ Checkout full history of all branches
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # ✅ Fetch full history, not just latest commit
+          fetch-depth: 0  # important: get all branches, not just one
 
-      - name: ✅ Fetch all remote branches
-        run: git fetch --all
+      - name: ✅ Fetch both branches explicitly
+        run: |
+          git fetch origin main
+          git fetch origin master
+          git branch --remotes  # log branches
+          git log -1 origin/main  # show last commit for debugging
+          git log -1 origin/master
 
       - name: ✅ Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
-      - name: ✅ Install dependencies
+      - name: ✅ Install Python dependencies
         run: pip install requests
 
-      - name: ✅ Run selector comparison
+      - name: ✅ Run selector comparison and update
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OP_API_KEY: ${{ secrets.OP_API_KEY }}
+        
         run: python compare_git_selectors.py
