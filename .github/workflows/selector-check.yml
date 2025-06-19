@@ -3,7 +3,7 @@ name: Detect and Sync Selector Changes
 
 on:
   push:
-    branches: [main]
+    branches: [master]
 
 jobs:
   check-selectors:
