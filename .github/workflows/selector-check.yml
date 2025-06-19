@@ -14,9 +14,6 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fetch all branches
-        run: git fetch --all
-
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
@@ -29,4 +26,7 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OP_API_KEY: ${{ secrets.OP_API_KEY }}
-        run: python compare_git_selectors.py
+        run: |
+          echo "GEMINI_API_KEY set? -> ${GEMINI_API_KEY}"
+          echo "OP_API_KEY set? -> ${OP_API_KEY}"
+          python compare_git_selectors.py

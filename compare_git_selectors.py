@@ -4,10 +4,17 @@ import os
 import requests
 import json
 
-# Load API keys
+# STEP 1: Load API keys from environment variables
 GEMINI_KEY = os.getenv("GEMINI_API_KEY")
 OP_API_KEY = os.getenv("OP_API_KEY")
 OP_BASE_URL = "https://api.observepoint.com/v2"
+
+# ✅ STEP 2: Print whether keys are loaded
+print("🔐 GEMINI_KEY set:", bool(GEMINI_KEY))
+print("🔐 OP_API_KEY set:", bool(OP_API_KEY))
+
+# ... rest of your code remains the same ...
+
 
 def run_cmd(cmd):
     try:
