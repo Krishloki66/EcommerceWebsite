@@ -15,27 +15,39 @@ def run_cmd(cmd):
         return ""
 
 def get_git_diff():
-    print("🔄 Fetching full history...")
-    run_cmd(["git", "fetch", "--unshallow"])
-    print("🔍 Comparing current branch with origin/main...")
-    return run_cmd(["git", "diff", "--diff-filter=ACMR", "origin/main...HEAD"])
+    print("🔄 Getting diff from last commit...")
+    return run_cmd(["git", "diff", "HEAD~1", "HEAD"])
 
 def extract_selectors(diff_text):
     added = set()
     removed = set()
 
+    class_regex = r'class=["\']([^"\']+)["\']'
+    id_regex = r'id=["\']([^"\']+)["\']'
+    data_attr_regex = r'data-[a-zA-Z0-9_-]+=["\']([^"\']+)["\']'
+    css_class_regex = r'\.([a-zA-Z0-9_-]+)\s*\{'
+    css_id_regex = r'#([a-zA-Z0-9_-]+)\s*\{'
+    js_class_regex = r'\.classList\.add\(["\']([^"\']+)["\']\)'
+    js_id_regex = r'setAttribute\(["\']id["\'],\s*["\']([^"\']+)["\']\)'
+
     for line in diff_text.splitlines():
         line = line.strip()
         if line.startswith('+') and not line.startswith('+++'):
-            added.update(re.findall(r'class="([^"]+)"', line))
-            added.update(re.findall(r'id="([^"]+)"', line))
-            added.update(re.findall(r'\.([a-zA-Z0-9_-]+)\s*\{', line))
-            added.update(re.findall(r'#([a-zA-Z0-9_-]+)\s*\{', line))
+            added.update(re.findall(class_regex, line))
+            added.update(re.findall(id_regex, line))
+            added.update(re.findall(data_attr_regex, line))
+            added.update(re.findall(css_class_regex, line))
+            added.update(re.findall(css_id_regex, line))
+            added.update(re.findall(js_class_regex, line))
+            added.update(re.findall(js_id_regex, line))
         elif line.startswith('-') and not line.startswith('---'):
-            removed.update(re.findall(r'class="([^"]+)"', line))
-            removed.update(re.findall(r'id="([^"]+)"', line))
-            removed.update(re.findall(r'\.([a-zA-Z0-9_-]+)\s*\{', line))
-            removed.update(re.findall(r'#([a-zA-Z0-9_-]+)\s*\{', line))
+            removed.update(re.findall(class_regex, line))
+            removed.update(re.findall(id_regex, line))
+            removed.update(re.findall(data_attr_regex, line))
+            removed.update(re.findall(css_class_regex, line))
+            removed.update(re.findall(css_id_regex, line))
+            removed.update(re.findall(js_class_regex, line))
+            removed.update(re.findall(js_id_regex, line))
 
     added = set(cls for entry in added for cls in entry.split())
     removed = set(cls for entry in removed for cls in entry.split())
@@ -54,11 +66,7 @@ Please suggest what UI elements were updated and how tests should be updated."""
         res = requests.post(
             f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={gemini_key}",
             headers={"Content-Type": "application/json"},
-            json={
-                "contents": [
-                    {"parts": [{"text": prompt}]}
-                ]
-            }
+            json={ "contents": [ { "parts": [ { "text": prompt } ] } ] }
         )
         return res.json()["candidates"][0]["content"]["parts"][0]["text"]
     except Exception as e:
@@ -118,5 +126,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
-
