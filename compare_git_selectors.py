@@ -15,10 +15,8 @@ def run_cmd(cmd):
         return ""
 
 def get_git_diff():
-    print("🔄 Fetching all remote branches...")
-    run_cmd(["git", "fetch", "--all"])
-    print("🔍 Checking diff between origin/master and origin/main...")
-    return run_cmd(["git", "diff", "origin/master..origin/main"])
+    print("🔄 Getting diff from last commit...")
+    return run_cmd(["git", "diff", "HEAD~1", "HEAD"])
 
 def extract_selectors(diff_text):
     added = set()
@@ -44,12 +42,12 @@ def extract_selectors(diff_text):
 def ask_gemini(old_sel, new_sel, gemini_key):
     if not gemini_key:
         return "[Error] GEMINI_API_KEY not set."
-    
+
     prompt = f"""We detected changes in selectors.
 Removed: {', '.join(f'.{s}' for s in old_sel)}
 Added: {', '.join(f'.{s}' for s in new_sel)}
 Please suggest what UI elements were updated and how tests should be updated."""
-    
+
     try:
         res = requests.post(
             f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={gemini_key}",
@@ -69,8 +67,7 @@ def update_observepoint_tests(old_selector, new_selector, op_api_key):
         print("❌ OP_API_KEY not set.")
         return
 
-    # Replace with real test IDs
-    test_ids = [123456, 234567]
+    test_ids = [123456, 234567]  # Replace with real test IDs
 
     for tid in test_ids:
         payload = {
@@ -90,7 +87,6 @@ def update_observepoint_tests(old_selector, new_selector, op_api_key):
             print(f"❌ Failed to update test {tid}: {e}")
 
 def main():
-    # ✅ Load API keys inside main()
     GEMINI_KEY = os.getenv("GEMINI_API_KEY")
     OP_API_KEY = os.getenv("OP_API_KEY")
 
