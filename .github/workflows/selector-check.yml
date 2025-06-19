@@ -1,21 +1,27 @@
-name: Detect Selector Changes
+# .github/workflows/selector-check.yml
+name: Detect and Sync Selector Changes
 
 on:
   push:
-    branches: [ master ]
+    branches: [main]
 
 jobs:
-  detect:
+  check-selectors:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout repository
+      - name: Checkout code
         uses: actions/checkout@v3
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: "3.11"
+          python-version: '3.11'
 
-      - name: Run selector diff check
-        run: |
-          python compare_git_selectors.py
+      - name: Install dependencies
+        run: pip install requests
+
+      - name: Run selector comparison
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          OP_API_KEY: ${{ secrets.OP_API_KEY }}
+        run: python compare_and_update.py

@@ -1,65 +1,73 @@
-import subprocess
-import re
+# compare_and_update.py
+import subprocess, os, requests, re, json
 
-def run_cmd(cmd):
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore')
-        return result.stdout.strip() if result.stdout else ""
-    except Exception as e:
-        print(f"⚠️ Command failed: {cmd}\n{e}")
-        return ""
+GEMINI_KEY = os.getenv("AIzaSyDVKQGkVKwJpNmwIO3eHlgVp8Eb95nYhcs")
+OBSERVEPOINT_KEY = os.getenv("bTVqbWcxM21nam5iM2dlOGZwNmxqMWFlZHUwOTdpbXBocm1sYWMwMjd2ZGQ4MW5xMXAyY2tza21tMCY3NDAzMiYxNzUwMjUwOTI3Mzc2")
+OP_BASE_URL = "https://api.observepoint.com/v2"
 
-def get_git_diff():
-    print("🔄 Fetching all remote branches...")
-    run_cmd(["git", "fetch", "--all"])
+def run_git_diff():
+    result = subprocess.run(
+        ["git", "diff", "origin/master..origin/main"],
+        capture_output=True,
+        text=True
+    )
+    return result.stdout if result.returncode == 0 else ""
 
-    print("🔍 Checking diff between origin/master and origin/main...")
-    diff = run_cmd(["git", "diff", "origin/master..origin/main"])
-    return diff
-
-def extract_selectors(diff_text):
-    added = set()
-    removed = set()
-
-    for line in diff_text.splitlines():
-        line = line.strip()
-        if line.startswith('+') and not line.startswith('+++'):
-            added.update(re.findall(r'class="("]+)"', line))  # HTML class
-            added.update(re.findall(r'id="("]+)"', line))     # HTML ID
-            added.update(re.findall(r'\.([a-zA-Z0-9_-]+)\s*\{', line))  # CSS class
-            added.update(re.findall(r'#([a-zA-Z0-9_-]+)\s*\{', line))   # CSS ID
-        elif line.startswith('-') and not line.startswith('---'):
-            removed.update(re.findall(r'class="("]+)"', line))
-            removed.update(re.findall(r'id="("]+)"', line))
-            removed.update(re.findall(r'\.([a-zA-Z0-9_-]+)\s*\{', line))
-            removed.update(re.findall(r'#([a-zA-Z0-9_-]+)\s*\{', line))
-
-    # Split multi-class declarations
-    added = set(cls for entry in added for cls in entry.split())
-    removed = set(cls for entry in removed for cls in entry.split())
+def extract_selectors(diff):
+    added, removed = set(), set()
+    for line in diff.splitlines():
+        if line.startswith("+") and 'class="' in line:
+            added.update(re.findall(r'class="([^"]+)"', line))
+        elif line.startswith("-") and 'class="' in line:
+            removed.update(re.findall(r'class="([^"]+)"', line))
     return added, removed
 
-def main():
-    diff = get_git_diff()
+def ask_gemini(old_sel, new_sel):
+    prompt = f"""The following selectors were changed:
+Old: {', '.join(f'.{x}' for x in old_sel)}
+New: {', '.join(f'.{x}' for x in new_sel)}
+Suggest what UI element changed and what to update in tests."""
+    response = requests.post(
+        f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GEMINI_KEY}",
+        headers={"Content-Type": "application/json"},
+        json={"contents": [{"parts": [{"text": prompt}]}]}
+    )
+    try:
+        return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+    except Exception as e:
+        return f"[Gemini Error] {e}"
 
-    if not diff.strip():
-        print("❌ No diff found or Git error.")
+def update_observepoint(selector_old, selector_new):
+    # Simulated loop - you should map to actual ObservePoint test IDs
+    test_ids = [12345, 23456]  # replace with real logic
+    for tid in test_ids:
+        data = {"selector": f".{selector_new}"}
+        res = requests.patch(
+            f"{OP_BASE_URL}/tag-tests/{tid}",
+            headers={"Authorization": f"Token token={OBSERVEPOINT_KEY}", "Content-Type": "application/json"},
+            json=data
+        )
+        print(f"Test {tid} updated with .{selector_new}: {res.status_code}")
+
+def main():
+    diff = run_git_diff()
+    if not diff:
+        print("❌ No diff found.")
         return
 
     added, removed = extract_selectors(diff)
-
     if not added and not removed:
-        print("✅ No selector changes found between main and master.")
-    else:
-        print("🧠 Detected selector changes:")
-        if removed:
-            print("➖ Removed selectors:")
-            for sel in sorted(added):
-                print(f"   .{sel}")
-        if added:
-            print("➕ Added selectors:")
-            for sel in sorted(removed):
-                print(f"   .{sel}")
+        print("✅ No selector changes.")
+        return
+
+    print("➕ Added:", added)
+    print("➖ Removed:", removed)
+
+    explanation = ask_gemini(removed, added)
+    print("\n🤖 Gemini Suggestion:\n", explanation)
+
+    for old, new in zip(removed, added):  # basic pairing
+        update_observepoint(old, new)
 
 if __name__ == "__main__":
     main()
