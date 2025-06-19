@@ -110,8 +110,8 @@ def main():
         print("✅ No selector changes found.")
         return
 
-    print("➖ Removed selectors:", removed)
-    print("➕ Added selectors:", added)
+    print("➖ Removed selectors:", added)
+    print("➕ Added selectors:", removed)
 
     suggestion = ask_gemini(removed, added, GEMINI_KEY)
     print("\n🤖 Gemini Suggestion:\n", suggestion)

@@ -203,7 +203,7 @@ footer a:hover{
   box-shadow: 0 4px 10px rgba(0, 102, 255, 0.2);
 }
 
-.buynow11 {
+.buynow12 {
   background-color: #ff3b3f;           /* Red Button for Urgency */
   color: #ffffff;
   padding: 12px 30px;
@@ -218,18 +218,18 @@ footer a:hover{
   letter-spacing: 1px;
 }
 
-.buynow11:hover {
+.buynow12:hover {
   background-color: #cc2f33;
   transform: scale(1.05);
   box-shadow: 0 10px 20px rgba(255, 59, 63, 0.5);
 }
 
-.buynow11:active {
+.buynow12:active {
   transform: scale(0.97);
   box-shadow: 0 3px 8px rgba(255, 59, 63, 0.3);
 }
 
-.buynow22 {
+.buynow13 {
   background-color: #b3898a;           /* Red Button for Urgency */
   color: #141414;
   padding: 12px 30px;
