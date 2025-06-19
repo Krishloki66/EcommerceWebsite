@@ -5,8 +5,8 @@ import requests
 import json
 
 # Load your API keys from GitHub Actions secrets or .env
-GEMINI_KEY = os.getenv("AIzaSyDVKQGkVKwJpNmwIO3eHlgVp8Eb95nYhcs")
-OP_API_KEY = os.getenv("bTVqbWcxM21nam5iM2dlOGZwNmxqMWFlZHUwOTdpbXBocm1sYWMwMjd2ZGQ4MW5xMXAyY2tza21tMCY3NDAzMiYxNzUwMjUwOTI3Mzc2")
+GEMINI_KEY = os.getenv("GEMINI_API_KEY")
+OP_API_KEY = os.getenv("OP_API_KEY")
 OP_BASE_URL = "https://api.observepoint.com/v2"
 
 def run_cmd(cmd):
@@ -33,7 +33,7 @@ def extract_selectors(diff_text):
     added = set(cls for entry in added for cls in entry.split())
     removed = set(cls for entry in removed for cls in entry.split())
     return added, removed
-
+print("GEMINI_KEY set:", bool(GEMINI_KEY))
 def ask_gemini(old_sel, new_sel):
     if not GEMINI_KEY:
         return "[Error] GEMINI_API_KEY not set."
