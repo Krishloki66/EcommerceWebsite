@@ -203,7 +203,7 @@ footer a:hover{
   box-shadow: 0 4px 10px rgba(0, 102, 255, 0.2);
 }
 
-.button123 {
+.button12 {
   background-color: #ff3b3f;           /* Red Button for Urgency */
   color: #ffffff;
   padding: 12px 30px;
@@ -218,13 +218,13 @@ footer a:hover{
   letter-spacing: 1px;
 }
 
-.button123:hover {
+.button12:hover {
   background-color: #cc2f33;
   transform: scale(1.05);
   box-shadow: 0 10px 20px rgba(255, 59, 63, 0.5);
 }
 
-.button123:active {
+.button12:active {
   transform: scale(0.97);
   box-shadow: 0 3px 8px rgba(255, 59, 63, 0.3);
 }
