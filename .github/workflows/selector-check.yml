@@ -31,4 +31,4 @@ jobs:
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OP_API_KEY: ${{ secrets.OP_API_KEY }}
-        run: python compare_and_update.py
+        run: python compare_git_selectors.py
