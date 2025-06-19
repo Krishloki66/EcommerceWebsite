@@ -23,7 +23,7 @@ jobs:
       - name: Install Python dependencies
         run: pip install requests
 
-      - name: Print current branch and compare with origin/main
+      - name: Show current branch and logs
         run: |
           echo "🔍 Current branch: $(git rev-parse --abbrev-ref HEAD)"
           git branch -a
