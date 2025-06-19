@@ -34,7 +34,7 @@ def extract_selectors(diff_text):
     added = set(cls for entry in added for cls in entry.split())
     removed = set(cls for entry in removed for cls in entry.split())
     return added, removed
-print("GEMINI_KEY set:", bool(GEMINI_KEY))
+
 def ask_gemini(old_sel, new_sel):
     if not GEMINI_KEY:
         return "[Error] GEMINI_API_KEY not set."
