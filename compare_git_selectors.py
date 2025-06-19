@@ -1,61 +1,51 @@
 import subprocess
-import os
 import re
+import os
 import requests
 import json
-from dotenv import load_dotenv
 
-# ✅ Load .env environment variables
-load_dotenv()
-
-# ✅ Get API keys from environment
-GEMINI_KEY = os.getenv("GEMINI_API_KEY")
-OBSERVEPOINT_KEY = os.getenv("OP_API_KEY")
+# Load your API keys from GitHub Actions secrets or .env
+GEMINI_KEY = os.getenv("AIzaSyDVKQGkVKwJpNmwIO3eHlgVp8Eb95nYhcs")
+OP_API_KEY = os.getenv("bTVqbWcxM21nam5iM2dlOGZwNmxqMWFlZHUwOTdpbXBocm1sYWMwMjd2ZGQ4MW5xMXAyY2tza21tMCY3NDAzMiYxNzUwMjUwOTI3Mzc2")
 OP_BASE_URL = "https://api.observepoint.com/v2"
 
-def run_git_diff():
-    try:
-        subprocess.run(["git", "fetch", "origin"], check=True)
-        result = subprocess.run(
-            ["git", "diff", "origin/master..origin/main"],
-            capture_output=True,
-            text=True,
-            encoding="utf-8"
-        )
-        return result.stdout
-    except Exception as e:
-        print(f"❌ Git diff failed: {e}")
-        return ""
+def run_cmd(cmd):
+    result = subprocess.run(cmd, capture_output=True, text=True, encoding='utf-8', errors='ignore')
+    return result.stdout.strip()
 
-def extract_selectors(diff):
-    added, removed = set(), set()
-    for line in diff.splitlines():
+def get_git_diff():
+    run_cmd(["git", "fetch", "--all"])
+    return run_cmd(["git", "diff", "origin/master..origin/main"])
+
+def extract_selectors(diff_text):
+    added = set()
+    removed = set()
+
+    for line in diff_text.splitlines():
         line = line.strip()
-        if line.startswith("+") and 'class="' in line:
-            matches = re.findall(r'class="([^"]+)"', line)
-            for match in matches:
-                for cls in match.split():
-                    if cls.isidentifier():
-                        added.add(cls)
-        elif line.startswith("-") and 'class="' in line:
-            matches = re.findall(r'class="([^"]+)"', line)
-            for match in matches:
-                for cls in match.split():
-                    if cls.isidentifier():
-                        removed.add(cls)
+        if line.startswith('+') and not line.startswith('+++'):
+            added.update(re.findall(r'class="([^"]+)"', line))
+            added.update(re.findall(r'id="([^"]+)"', line))
+        elif line.startswith('-') and not line.startswith('---'):
+            removed.update(re.findall(r'class="([^"]+)"', line))
+            removed.update(re.findall(r'id="([^"]+)"', line))
+
+    added = set(cls for entry in added for cls in entry.split())
+    removed = set(cls for entry in removed for cls in entry.split())
     return added, removed
 
 def ask_gemini(old_sel, new_sel):
     if not GEMINI_KEY:
-        return "[Error] GEMINI_API_KEY not found."
+        return "[Error] GEMINI_API_KEY not set."
 
-    prompt = f"""The following selectors were changed:
-Old: {', '.join(f'.{x}' for x in old_sel)}
-New: {', '.join(f'.{x}' for x in new_sel)}
-Suggest what UI element changed and what to update in tests."""
+    prompt = f"""We detected changes in selectors:
+Removed: {', '.join(f'.{s}' for s in old_sel)}
+Added: {', '.join(f'.{s}' for s in new_sel)}
+What UI components were likely updated and how should tests be adjusted?
+"""
 
     try:
-        response = requests.post(
+        res = requests.post(
             f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GEMINI_KEY}",
             headers={"Content-Type": "application/json"},
             json={
@@ -64,39 +54,41 @@ Suggest what UI element changed and what to update in tests."""
                 ]
             }
         )
-        return response.json()["candidates"][0]["content"]["parts"][0]["text"]
+        return res.json()["candidates"][0]["content"]["parts"][0]["text"]
     except Exception as e:
-        return f"[Gemini API Error] {e}"
+        return f"[Gemini Error] {e}"
 
-def update_observepoint(selector_old, selector_new):
-    if not OBSERVEPOINT_KEY:
-        print("[Error] OP_API_KEY not found.")
+def update_op_journeys(old, new):
+    if not OP_API_KEY:
+        print("❌ OP_API_KEY not set.")
         return
 
-    test_ids = [12345, 23456]  # Replace with your real ObservePoint tag test IDs
-
+    test_ids = [123456, 234567]  # Replace with your real test IDs
     for tid in test_ids:
-        data = {"selector": f".{selector_new}"}
+        payload = {
+            "selector": f".{new}"
+        }
         try:
-            response = requests.patch(
+            res = requests.patch(
                 f"{OP_BASE_URL}/tag-tests/{tid}",
                 headers={
-                    "Authorization": f"Token token={OBSERVEPOINT_KEY}",
+                    "Authorization": f"Token token={OP_API_KEY}",
                     "Content-Type": "application/json"
                 },
-                json=data
+                json=payload
             )
-            print(f"✅ Updated test {tid} with .{selector_new} | Status: {response.status_code}")
+            print(f"✅ Updated OP test {tid} with selector .{new} | Status: {res.status_code}")
         except Exception as e:
-            print(f"❌ Failed to update test {tid}: {e}")
+            print(f"❌ Failed to update OP test {tid}: {e}")
 
 def main():
-    diff = run_git_diff()
+    diff = get_git_diff()
     if not diff:
-        print("❌ No selector diff found.")
+        print("❌ No diff found.")
         return
 
     added, removed = extract_selectors(diff)
+
     if not added and not removed:
         print("✅ No selector changes found.")
         return
@@ -108,7 +100,7 @@ def main():
     print("\n🤖 Gemini Suggestion:\n", explanation)
 
     for old, new in zip(removed, added):
-        update_observepoint(old, new)
+        update_op_journeys(old, new)
 
 if __name__ == "__main__":
     main()
