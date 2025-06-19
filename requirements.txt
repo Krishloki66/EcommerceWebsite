@@ -1,3 +1,5 @@
 requests
 beautifulsoup4
 
+# GEMINI_KEY = os.getenv("AIzaSyDVKQGkVKwJpNmwIO3eHlgVp8Eb95nYhcs")
+# OBSERVEPOINT_KEY = os.getenv("bTVqbWcxM21nam5iM2dlOGZwNmxqMWFlZHUwOTdpbXBocm1sYWMwMjd2ZGQ4MW5xMXAyY2tza21tMCY3NDAzMiYxNzUwMjUwOTI3Mzc2")
