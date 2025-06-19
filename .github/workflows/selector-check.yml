@@ -27,6 +27,6 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OP_API_KEY: ${{ secrets.OP_API_KEY }}
         run: |
-          echo "GEMINI_API_KEY set? -> ${GEMINI_API_KEY}"
-          echo "OP_API_KEY set? -> ${OP_API_KEY}"
+          echo "🔐 GEMINI_API_KEY set? -> ${GEMINI_API_KEY:+Yes}"
+          echo "🔐 OP_API_KEY set? -> ${OP_API_KEY:+Yes}"
           python compare_git_selectors.py
