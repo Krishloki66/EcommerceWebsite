@@ -4,9 +4,6 @@ import os
 import requests
 import json
 
-# Load API keys
-GEMINI_KEY = os.getenv("GEMINI_API_KEY")
-OP_API_KEY = os.getenv("OP_API_KEY")
 OP_BASE_URL = "https://api.observepoint.com/v2"
 
 def run_cmd(cmd):
@@ -44,16 +41,18 @@ def extract_selectors(diff_text):
     removed = set(cls for entry in removed for cls in entry.split())
     return added, removed
 
-def ask_gemini(old_sel, new_sel):
-    if not GEMINI_KEY:
+def ask_gemini(old_sel, new_sel, gemini_key):
+    if not gemini_key:
         return "[Error] GEMINI_API_KEY not set."
+    
     prompt = f"""We detected changes in selectors.
 Removed: {', '.join(f'.{s}' for s in old_sel)}
 Added: {', '.join(f'.{s}' for s in new_sel)}
 Please suggest what UI elements were updated and how tests should be updated."""
+    
     try:
         res = requests.post(
-            f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={GEMINI_KEY}",
+            f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={gemini_key}",
             headers={"Content-Type": "application/json"},
             json={
                 "contents": [
@@ -65,12 +64,12 @@ Please suggest what UI elements were updated and how tests should be updated."""
     except Exception as e:
         return f"[Gemini Error] {e}"
 
-def update_observepoint_tests(old_selector, new_selector):
-    if not OP_API_KEY:
+def update_observepoint_tests(old_selector, new_selector, op_api_key):
+    if not op_api_key:
         print("❌ OP_API_KEY not set.")
         return
 
-    # Example test IDs (replace with your actual ObservePoint journey/test IDs)
+    # Replace with real test IDs
     test_ids = [123456, 234567]
 
     for tid in test_ids:
@@ -81,7 +80,7 @@ def update_observepoint_tests(old_selector, new_selector):
             res = requests.patch(
                 f"{OP_BASE_URL}/tag-tests/{tid}",
                 headers={
-                    "Authorization": f"Token token={OP_API_KEY}",
+                    "Authorization": f"Token token={op_api_key}",
                     "Content-Type": "application/json"
                 },
                 json=payload
@@ -91,6 +90,13 @@ def update_observepoint_tests(old_selector, new_selector):
             print(f"❌ Failed to update test {tid}: {e}")
 
 def main():
+    # ✅ Load API keys inside main()
+    GEMINI_KEY = os.getenv("GEMINI_API_KEY")
+    OP_API_KEY = os.getenv("OP_API_KEY")
+
+    print("🔐 GEMINI_KEY set:", bool(GEMINI_KEY))
+    print("🔐 OP_API_KEY set:", bool(OP_API_KEY))
+
     diff = get_git_diff()
 
     if not diff.strip():
@@ -106,11 +112,11 @@ def main():
     print("➖ Removed selectors:", removed)
     print("➕ Added selectors:", added)
 
-    suggestion = ask_gemini(removed, added)
+    suggestion = ask_gemini(removed, added, GEMINI_KEY)
     print("\n🤖 Gemini Suggestion:\n", suggestion)
 
     for old, new in zip(removed, added):
-        update_observepoint_tests(old, new)
+        update_observepoint_tests(old, new, OP_API_KEY)
 
 if __name__ == "__main__":
     main()
