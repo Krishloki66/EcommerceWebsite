@@ -2,30 +2,30 @@ name: Detect Selector Changes
 
 on:
   push:
-    branches: [master]
+    branches: [ master ]
 
 jobs:
   detect:
     runs-on: ubuntu-latest
 
     steps:
-      - name: ✅ Checkout all branches
+      - name: Checkout all branches
         uses: actions/checkout@v3
         with:
-          fetch-depth: 0  # ✅ Fetch full history, not just latest commit
+          fetch-depth: 0
 
-      - name: ✅ Fetch all remote branches
+      - name: Fetch all branches
         run: git fetch --all
 
-      - name: ✅ Set up Python
+      - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: "3.11"
 
-      - name: ✅ Install dependencies
+      - name: Install dependencies
         run: pip install requests
 
-      - name: ✅ Run selector comparison
+      - name: Run selector diff + AI update
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           OP_API_KEY: ${{ secrets.OP_API_KEY }}
