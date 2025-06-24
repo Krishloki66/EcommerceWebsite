@@ -229,6 +229,21 @@ footer a:hover{
   box-shadow: 0 3px 8px rgba(255, 59, 63, 0.3);
 }
 
+.buynow21 {
+  background-color: #ff3b3f;           /* Red Button for Urgency */
+  color: #ffffff;
+  padding: 12px 30px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.2s ease;
+  box-shadow: 0 6px 15px rgba(255, 59, 63, 0.4);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 
 
 

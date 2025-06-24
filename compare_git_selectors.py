@@ -17,48 +17,58 @@ def run_cmd(cmd):
 def get_git_diff():
     print("🔄 Fetching all remote branches...")
     run_cmd(["git", "fetch", "--all"])
-    print("🔍 Checking diff between origin/master and origin/main...")
-    return run_cmd(["git", "diff", "origin/master..origin/main"])
+    print("🔍 Comparing diff between origin/main and master...")
+    return run_cmd(["git", "diff", "origin/main..master"])
+
+def extract_line_selectors(line):
+    selectors = set()
+
+    # HTML class and id
+    selectors.update(*[set(cls.split()) for cls in re.findall(r'class=["\']([^"\']+)["\']', line)])
+    selectors.update(re.findall(r'id=["\']([^"\']+)["\']', line))
+
+    # data-* attributes
+    selectors.update(re.findall(r'data-[\w-]+=["\']([^"\']+)["\']', line))
+
+    # JS DOM setAttribute
+    for attr in ['class', 'id']:
+        dom_matches = re.findall(rf'setAttribute\(["\']{attr}["\']\s*,\s*["\']([^"\']+)["\']\)', line)
+        for match in dom_matches:
+            selectors.update(match.split())
+
+    # CSS selectors
+    selectors.update(re.findall(r'\.([a-zA-Z0-9_-]+)\s*\{', line))
+    selectors.update(re.findall(r'#([a-zA-Z0-9_-]+)\s*\{', line))
+
+    return selectors
 
 def extract_selectors(diff_text):
-    added = set()
-    removed = set()
+    added, removed = set(), set()
 
     for line in diff_text.splitlines():
         line = line.strip()
         if line.startswith('+') and not line.startswith('+++'):
-            added.update(re.findall(r'class="([^"]+)"', line))
-            added.update(re.findall(r'id="([^"]+)"', line))
-            added.update(re.findall(r'\.([a-zA-Z0-9_-]+)\s*\{', line))
-            added.update(re.findall(r'#([a-zA-Z0-9_-]+)\s*\{', line))
+            added.update(extract_line_selectors(line[1:]))
         elif line.startswith('-') and not line.startswith('---'):
-            removed.update(re.findall(r'class="([^"]+)"', line))
-            removed.update(re.findall(r'id="([^"]+)"', line))
-            removed.update(re.findall(r'\.([a-zA-Z0-9_-]+)\s*\{', line))
-            removed.update(re.findall(r'#([a-zA-Z0-9_-]+)\s*\{', line))
+            removed.update(extract_line_selectors(line[1:]))
 
-    added = set(cls for entry in added for cls in entry.split())
-    removed = set(cls for entry in removed for cls in entry.split())
-    return added, removed
+    # Ensure we only report net new and net removed
+    return added - removed, removed - added
 
 def ask_gemini(old_sel, new_sel, gemini_key):
     if not gemini_key:
         return "[Error] GEMINI_API_KEY not set."
-    
+
     prompt = f"""We detected changes in selectors.
 Removed: {', '.join(f'.{s}' for s in old_sel)}
 Added: {', '.join(f'.{s}' for s in new_sel)}
 Please suggest what UI elements were updated and how tests should be updated."""
-    
+
     try:
         res = requests.post(
             f"https://generativelanguage.googleapis.com/v1/models/gemini-pro:generateContent?key={gemini_key}",
             headers={"Content-Type": "application/json"},
-            json={
-                "contents": [
-                    {"parts": [{"text": prompt}]}
-                ]
-            }
+            json={"contents": [{"parts": [{"text": prompt}]}]}
         )
         return res.json()["candidates"][0]["content"]["parts"][0]["text"]
     except Exception as e:
@@ -69,8 +79,7 @@ def update_observepoint_tests(old_selector, new_selector, op_api_key):
         print("❌ OP_API_KEY not set.")
         return
 
-    # Replace with real test IDs
-    test_ids = [123456, 234567]
+    test_ids = [123456, 234567]  # Replace with real test IDs
 
     for tid in test_ids:
         payload = {
@@ -90,7 +99,6 @@ def update_observepoint_tests(old_selector, new_selector, op_api_key):
             print(f"❌ Failed to update test {tid}: {e}")
 
 def main():
-    # ✅ Load API keys inside main()
     GEMINI_KEY = os.getenv("GEMINI_API_KEY")
     OP_API_KEY = os.getenv("OP_API_KEY")
 
@@ -120,3 +128,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
