@@ -21,7 +21,9 @@ jobs:
           python-version: "3.11"
 
       - name: Install Python dependencies
-        run: pip install requests
+        run: |
+          pip install --upgrade pip
+          pip install requests beautifulsoup4
 
       - name: Show current branch and logs
         run: |
