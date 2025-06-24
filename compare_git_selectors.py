@@ -3,6 +3,7 @@ import re
 import os
 import requests
 import json
+from bs4 import BeautifulSoup
 
 OP_BASE_URL = "https://api.observepoint.com/v2"
 
@@ -42,17 +43,41 @@ def extract_line_selectors(line):
 
     return selectors
 
+def extract_html_selectors(html_block):
+    selectors = set()
+    try:
+        soup = BeautifulSoup(html_block, 'html.parser')
+        for tag in soup.find_all(True):
+            if tag.has_attr('class'):
+                selectors.update(tag['class'])
+            if tag.has_attr('id'):
+                selectors.add(tag['id'])
+            for attr, val in tag.attrs.items():
+                if attr.startswith('data-') and isinstance(val, str):
+                    selectors.add(val)
+    except Exception as e:
+        print(f"⚠️ HTML parse error: {e}")
+    return selectors
+
 def extract_selectors(diff_text):
+    added_html_lines = []
+    removed_html_lines = []
     added, removed = set(), set()
 
     for line in diff_text.splitlines():
         line = line.strip()
         if line.startswith('+') and not line.startswith('+++'):
-            added.update(extract_line_selectors(line[1:]))
+            added_html_lines.append(line[1:])
+            added.update(extract_line_selectors(line[1:]))  # JS + CSS
         elif line.startswith('-') and not line.startswith('---'):
+            removed_html_lines.append(line[1:])
             removed.update(extract_line_selectors(line[1:]))
 
-    # Ensure we only report net new and net removed
+    # Parse HTML blocks using BeautifulSoup
+    added.update(extract_html_selectors("\n".join(added_html_lines)))
+    removed.update(extract_html_selectors("\n".join(removed_html_lines)))
+
+    # Final net added/removed
     return added - removed, removed - added
 
 def ask_gemini(old_sel, new_sel, gemini_key):
@@ -128,4 +153,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
