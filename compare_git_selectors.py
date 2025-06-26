@@ -16,15 +16,15 @@ def run_cmd(cmd):
         return ""
 
 def get_git_diff():
-    print("🔄 Fetching all remote branches...")
-    run_cmd(["git", "fetch", "--all"])
-    print("🔍 Comparing diff between origin/main and master...")
-    return run_cmd(["git", "diff", "origin/main..master"])
+    print("🔄 Fetching origin/main...")
+    run_cmd(["git", "fetch", "origin", "main"])
+    print("🔍 Comparing latest commit on master vs origin/main...")
+    return run_cmd(["git", "diff", "origin/main...HEAD"])
 
 def extract_line_selectors(line):
     selectors = set()
 
-    # HTML class and id
+    # HTML class and id attributes
     selectors.update(*[set(cls.split()) for cls in re.findall(r'class=["\']([^"\']+)["\']', line)])
     selectors.update(re.findall(r'id=["\']([^"\']+)["\']', line))
 
@@ -37,7 +37,7 @@ def extract_line_selectors(line):
         for match in dom_matches:
             selectors.update(match.split())
 
-    # CSS selectors
+    # CSS selectors in stylesheets
     selectors.update(re.findall(r'\.([a-zA-Z0-9_-]+)\s*\{', line))
     selectors.update(re.findall(r'#([a-zA-Z0-9_-]+)\s*\{', line))
 
@@ -68,16 +68,15 @@ def extract_selectors(diff_text):
         line = line.strip()
         if line.startswith('+') and not line.startswith('+++'):
             added_html_lines.append(line[1:])
-            added.update(extract_line_selectors(line[1:]))  # JS + CSS
+            added.update(extract_line_selectors(line[1:]))
         elif line.startswith('-') and not line.startswith('---'):
             removed_html_lines.append(line[1:])
             removed.update(extract_line_selectors(line[1:]))
 
-    # Parse HTML blocks using BeautifulSoup
+    # HTML-based extraction using BeautifulSoup
     added.update(extract_html_selectors("\n".join(added_html_lines)))
     removed.update(extract_html_selectors("\n".join(removed_html_lines)))
 
-    # Final net added/removed
     return added - removed, removed - added
 
 def ask_gemini(old_sel, new_sel, gemini_key):
@@ -104,7 +103,7 @@ def update_observepoint_tests(old_selector, new_selector, op_api_key):
         print("❌ OP_API_KEY not set.")
         return
 
-    test_ids = [123456, 234567]  # Replace with real test IDs
+    test_ids = [123456, 234567]  # Replace with actual ObservePoint test IDs
 
     for tid in test_ids:
         payload = {
@@ -127,7 +126,7 @@ def main():
     GEMINI_KEY = os.getenv("GEMINI_API_KEY")
     OP_API_KEY = os.getenv("OP_API_KEY")
 
-    print("🔐 GEMINI_KEY set:", bool(GEMINI_KEY))
+    print("🔐 GEMINI_API_KEY set:", bool(GEMINI_KEY))
     print("🔐 OP_API_KEY set:", bool(OP_API_KEY))
 
     diff = get_git_diff()
